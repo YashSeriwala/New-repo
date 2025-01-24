@@ -21,4 +21,9 @@ name : Deploy Lambda Layer
         -name : aws configuration
          uses : aws-actions/configure-aws-credentials@v2
            with : 
-             aws-access-key-id =${{secrets}}
+             aws-access-key-id : ${{secrets.ACCESSKEY}}
+             aws-secret-key-id : ${{secrets.SECRETKEY}}
+             aws-region : us-east-1
+        -name : Deploy pyhton lambda layer
+         run: |
+          aws lambda publish-layer-version --layer-name PythonLayer --zip-file fileb://python-layer.zip --compatible-runtimes python3.10
