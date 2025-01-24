@@ -1,30 +1,45 @@
-name : Deploy Lambda Layer
-  on :
-    push :
-      branches :
-        -main
-    jobs :
-      Deploy :
-        runs-on : ubuntu-latest
-        steps :
-        -name : checkout repository
-         uses : actions/checkout
-        -name : setup a pyhton libraby
-         uses : action/setup-lambda@v4
-         with : 
-           python-version : '3.13'
-        -name : Install python dependies
-         run: |
-          mkdir -p python
-          pip install -r requirements.txt -t python
-          zip -r python-layer.zip python
-        -name : aws configuration
-         uses : aws-actions/configure-aws-credentials@v2
-           with : 
-             aws-access-key-id : '${{secrets.ACCESSKEY}}'
-             aws-secret-key-id : '${{secrets.SECRETKEY}}'
-             aws-region : us-east-1
-        -name : Deploy pyhton lambda layer
-         run: |
-          aws lambda update-function-code --function-name Layer-function --zip-file fileb://function.zip
+name: CI/CD for Lambda with Layer (No S3)
+'on':
+  push:
+    branches:
+      - main
+jobs:
+  deploy-lambda:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - name: Install Dependencies and Package Layer
+        run: |
+          mkdir -p layer/python
+          pip install -r ./layer/requirements.txt -t layer/python
+          cd layer && zip -r ../layer.zip . && cd ..
+      - name: Package Lambda Function
+        run: >
+          zip -r function.zip src/lambda_function.py  # Replace with your Lambda
+          entry file
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: '${{ secrets.ACCESSKEY }}'
+          aws-secret-access-key: '${{ secrets.SECRETKEY }}'
+          aws-region: us-east-1
+      - name: Publish Lambda Layer
+        id: publish-layer
+        run: |
+          LAYER_ARN=$(aws lambda publish-layer-version \
+            --layer-name my-python-layer \
+            --zip-file fileb://layer.zip \
+            --compatible-runtimes python3.13 \
+            --query LayerVersionArn --output text)
+          echo "LAYER_ARN=${LAYER_ARN}" >> $GITHUB_ENV
+      - name: Deploy Lambda Function
+        run: >
+          aws lambda update-function-code --function-name Layer-function --zip-file
+          fileb://function.zip
+
           aws lambda update-function-configuration --function-name Layer-function --layers $LAYER_ARN
