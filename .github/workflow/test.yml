@@ -39,6 +39,8 @@ jobs:
           echo "LAYER_ARN=${LAYER_ARN}" >> $GITHUB_ENV
       - name: Deploy Lambda Function
         run: >
-          aws lambda update-function-code --function-name Layer-function --zip-file 
-          fileb://function.zip
-          aws lambda update-function-configuration --function-name Layer-function --layers $LAYER_ARN
+          aws lambda update-function-code --function-name Layer-function
+          --zip-file fileb://function.zip
+
+          aws lambda update-function-configuration --function-name
+          Layer-function --layers $LAYER_ARN
