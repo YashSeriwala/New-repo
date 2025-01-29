@@ -1,36 +1,49 @@
-# This is a basic workflow to help you get started with Actions
-
-name: CI
-
-# Controls when the workflow will run
+name: CI/CD for Lambda with Layer (No S3)
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
-
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+    branches:
+      - main
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
+  deploy-lambda:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
-
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
-        run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+    # Step 1: Checkout the repository
+    - name: Checkout Code
+      uses: actions/checkout@v3
+    # Step 2: Set up Python (if needed)
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.13'
+    # Step 3: Install dependencies and package layer
+    - name: Install Dependencies and Package Layer
+      run: |
+        mkdir -p layer/python
+        pip install -r ./layer/requirements.txt -t layer/python
+        cd layer && zip -r ../layer.zip . && cd ..
+    # Step 4: Zip the Lambda function code
+    - name: Package Lambda Function
+      run: |
+        zip -r function.zip src/lambda_function.py  # Replace with your Lambda entry file
+    # Step 5: Configure AWS credentials
+    - name: Configure AWS Credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ap-south-1
+    # Step 6: Publish the Lambda layer
+    - name: Publish Lambda Layer
+      id: publish-layer
+      run: |
+        LAYER_ARN=$(aws lambda publish-layer-version \
+          --layer-name my-python-layer \
+          --zip-file fileb://layer.zip \
+          --compatible-runtimes python3.13 \
+          --query LayerVersionArn --output text)
+        echo "LAYER_ARN=${LAYER_ARN}" >> $GITHUB_ENV
+    # Step 7: Update the Lambda function
+    - name: Deploy Lambda Function
+      run: |
+        aws lambda update-function-code --function-name LambdaCICD --zip-file fileb://function.zip
+        aws lambda update-function-configuration --function-name LambdaCICD --layers $LAYER_ARN
