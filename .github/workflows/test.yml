@@ -19,7 +19,7 @@ jobs:
     - name: Install Dependencies and Package Layer
       run: |
         mkdir -p layer/python
-        pip install -r ./layer/requirements.txt -t layer/python
+        pip install -r ./layer/requirement.txt -t layer/python
         cd layer && zip -r ../layer.zip . && cd ..
     # Step 4: Zip the Lambda function code
     - name: Package Lambda Function
