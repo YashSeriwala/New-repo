@@ -24,7 +24,7 @@ jobs:
     # Step 4: Zip the Lambda function code
     - name: Package Lambda Function
       run: |
-        zip -r function.zip . -i LAMBDACICD/src/lambda_function.py
+        zip -r function.zip src/lambda_function.py  # Replace with your Lambda entry file
   # Replace with your Lambda entry file
     # Step 5: Configure AWS credentials
     - name: Configure AWS Credentials
@@ -46,5 +46,5 @@ jobs:
     # Step 7: Update the Lambda function
     - name: Deploy Lambda Function
       run: |
-        aws lambda update-function-code --function-name LambdaCICD --zip-file fileb://function.zip
-        aws lambda update-function-configuration --function-name LambdaCICD --layers $LAYER_ARN
+        aws lambda update-function-code --function-name Layer-function --zip-file fileb://function.zip
+        aws lambda update-function-configuration --function-name Layer-function --layers $LAYER_ARN
