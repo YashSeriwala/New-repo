@@ -32,7 +32,7 @@ jobs:
       with:
         aws-access-key-id: ${{ secrets.ACCESSKEY }}
         aws-secret-access-key: ${{ secrets.SECRETKEY }}
-        aws-region: ap-south-1
+        aws-region: us-east-1
     # Step 6: Publish the Lambda layer
     - name: Publish Lambda Layer
       id: publish-layer
