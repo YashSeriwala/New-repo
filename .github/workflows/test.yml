@@ -3,28 +3,34 @@ on:
   push:
     branches:
       - main
+
 jobs:
   deploy-lambda:
     runs-on: ubuntu-latest
+
     steps:
     # Step 1: Checkout the repository
     - name: Checkout Code
       uses: actions/checkout@v3
+
     # Step 2: Set up Python (if needed)
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.13'
-    # Step 3: Install dependencies and package layer
+
+    # Step 3: Install dependencies and package the layer
     - name: Install Dependencies and Package Layer
       run: |
         mkdir -p layer/python
-        pip install -r ./layer/requirement.txt -t layer/python
+        pip install -r ./layer/requirements.txt -t layer/python
         cd layer && zip -r ../layer.zip . && cd ..
+
     # Step 4: Zip the Lambda function code
     - name: Package Lambda Function
       run: |
-        zip -r function.zip . -i lambda_function.py  # Replace with your Lambda entry file
+        zip -r function.zip lambda_function.py  # Replace with your Lambda entry file
+
     # Step 5: Configure AWS credentials
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v3
@@ -32,7 +38,8 @@ jobs:
         aws-access-key-id: ${{ secrets.ACCESSKEY }}
         aws-secret-access-key: ${{ secrets.SECRETKEY }}
         aws-region: us-east-1
-    # Step 6: Publish the Lambda layer
+
+    # Step 6: Publish the Lambda Layer
     - name: Publish Lambda Layer
       id: publish-layer
       run: |
@@ -42,8 +49,9 @@ jobs:
           --compatible-runtimes python3.13 \
           --query LayerVersionArn --output text)
         echo "LAYER_ARN=${LAYER_ARN}" >> $GITHUB_ENV
+
     # Step 7: Update the Lambda function
     - name: Deploy Lambda Function
       run: |
         aws lambda update-function-code --function-name Layer-function --zip-file fileb://function.zip
-        aws lambda update-function-configuration --function-name LAyer-function --layers $LAYER_ARN
+        aws lambda update-function-configuration --function-name Layer-function --layers ${{ env.LAYER_ARN }}
