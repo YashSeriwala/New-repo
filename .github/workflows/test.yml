@@ -24,7 +24,8 @@ jobs:
     # Step 4: Zip the Lambda function code
     - name: Package Lambda Function
       run: |
-        zip -r function.zip LAMBDACICD/src/lambda_function.py  # Replace with your Lambda entry file
+        zip -r function.zip LAMBDACICD/src/ -i LAMBDACICD/src/lambda_function.py
+  # Replace with your Lambda entry file
     # Step 5: Configure AWS credentials
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v3
