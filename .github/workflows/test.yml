@@ -19,13 +19,12 @@ jobs:
     - name: Install Dependencies and Package Layer
       run: |
         mkdir -p layer/python
-        pip install -r ./layer/requirement.txt -t layer/python
+        pip install -r ./layer/requirements.txt -t layer/python
         cd layer && zip -r ../layer.zip . && cd ..
     # Step 4: Zip the Lambda function code
     - name: Package Lambda Function
       run: |
-        zip -r function.zip . -i lambda_function.py
-  # Replace with your Lambda entry file
+        zip -r function.zip src/lambda_function.py  # Replace with your Lambda entry file
     # Step 5: Configure AWS credentials
     - name: Configure AWS Credentials
       uses: aws-actions/configure-aws-credentials@v3
@@ -47,4 +46,4 @@ jobs:
     - name: Deploy Lambda Function
       run: |
         aws lambda update-function-code --function-name Layer-function --zip-file fileb://function.zip
-        aws lambda update-function-configuration --function-name Layer-function --layers $LAYER_ARN
+        aws lambda update-function-configuration --function-name LAyer-function --layers $LAYER_ARN
